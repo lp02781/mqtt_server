@@ -12,3 +12,6 @@ sudo ./uninstall_mqtt_server.sh
 
 echo "${GREEN}Build and run docker compose${NC}"
 docker-compose -f compose_mqtt_server.yml up -d
+
+echo "${GREEN}Restart container${NC}"
+sudo ./restart_mqtt_server.sh
