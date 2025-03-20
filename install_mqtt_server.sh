@@ -8,7 +8,7 @@ sudo apt install mosquitto -y
 sudo apt install mosquitto-clients -y
 
 echo "${GREEN}Uninstall first${NC}"
-sudo ./uninstall.sh
+sudo ./uninstall_mqtt_server.sh
 
 echo "${GREEN}Build and run docker compose${NC}"
-docker-compose -f deploy_compose.yml up -d
+docker-compose -f compose_mqtt_server.yml up -d
