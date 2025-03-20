@@ -8,7 +8,7 @@ use rand::SeedableRng;
 
 use crate::json;
 
-pub async fn send_mqtt_data(payload: json::MqttPayload) -> Result<(), reqwest::Error> {
+pub async fn post_mqtt_data(payload: json::MqttPayload) -> Result<(), reqwest::Error> {
     let client = reqwest::Client::new();
     let url = "http://localhost:7000/database/mqtt/data";
 
@@ -44,7 +44,7 @@ pub async fn start_mqtt_subscriber() {
 
                 match serde_json::from_slice::<json::MqttPayload>(&publish.payload) {
                     Ok(payload) => {
-                        if let Err(e) = send_mqtt_data(payload).await {
+                        if let Err(e) = post_mqtt_data(payload).await {
                             eprintln!("Error sending MQTT data: {:?}", e);
                         }
                     }
@@ -100,6 +100,17 @@ pub async fn start_mqtt_publisher() {
         
         client.publish("/mqtt_actix/data", QoS::AtMostOnce, false, json_data.clone()).unwrap();
         println!("Published: Topic = /mqtt_actix/data, Payload = {}", json_data); 
+
+        match serde_json::from_str::<json::MqttPayload>(&json_data) {
+            Ok(payload) => {
+                if let Err(e) = post_mqtt_data(payload).await {
+                    eprintln!("[publisher] Error post MQTT data: {:?}", e);
+                }
+            }
+            Err(e) => {
+                eprintln!("[publisher] Failed to deserialize MQTT payload: {:?}", e);
+            }
+        }
 
         tokio::time::sleep(Duration::from_secs(10)).await; 
     }
