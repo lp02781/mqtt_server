@@ -31,7 +31,7 @@ try:
         humidity = random.randint(30, 80)
         current = random.uniform(1, 10)
         sensor_data = {
-            "id": 1,
+            "id": "mqtt_node_1",
             "timestamp": time.time(),
             "data": {  
                 "temperature": temperature,

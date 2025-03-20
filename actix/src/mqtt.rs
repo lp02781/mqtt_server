@@ -2,10 +2,24 @@ use rumqttc::{Client, Event, LastWill, MqttOptions, Packet, QoS};
 use serde_json;
 use std::time::{Duration, SystemTime};
 use rand::Rng;  
+use reqwest;
 use rand::rngs::StdRng;  
 use rand::SeedableRng;  
 
 use crate::json;
+
+pub async fn send_mqtt_data(payload: json::MqttPayload) -> Result<(), reqwest::Error> {
+    let client = reqwest::Client::new();
+    let url = "http://localhost:7000/database/mqtt/data";
+
+    let response = client
+        .post(url)
+        .json(&payload)
+        .send()
+        .await?;
+
+    Ok(())
+}
 
 pub async fn start_mqtt_subscriber() {
     let mut mqttoptions = MqttOptions::new("mqtt_subscriber", "localhost", 1883);
@@ -24,18 +38,29 @@ pub async fn start_mqtt_subscriber() {
     loop {
         match connection.eventloop.poll().await {
             Ok(Event::Incoming(Packet::Publish(publish))) => {
-                println!("Received: Topic = {}, Payload = {:?}", publish.topic, publish.payload);
+                println!(
+                    "Received: Topic = {}, Payload = {:?}", publish.topic, publish.payload
+                );
+
+                match serde_json::from_slice::<json::MqttPayload>(&publish.payload) {
+                    Ok(payload) => {
+                        if let Err(e) = send_mqtt_data(payload).await {
+                            eprintln!("Error sending MQTT data: {:?}", e);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to deserialize MQTT payload: {:?}", e);
+                    }
+                }
             }
             Ok(_) => {}
             Err(e) => {
                 println!("Error receiving message: {:?}", e);
-                break; 
+                break;
             }
         }
-
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
-
     println!("MQTT subscriber disconnected or error occurred.");
 }
 
