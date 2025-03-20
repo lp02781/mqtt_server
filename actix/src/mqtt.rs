@@ -11,7 +11,7 @@ pub async fn start_mqtt_subscriber() {
     let mut mqttoptions = MqttOptions::new("mqtt_subscriber", "localhost", 1883);
     let will = LastWill::new("hello/world", "good-bye", QoS::AtMostOnce, false);
     mqttoptions
-        .set_keep_alive(Duration::from_secs(5))
+        .set_keep_alive(Duration::from_secs(60))
         .set_last_will(will);
 
     let (client, mut connection) = Client::new(mqttoptions, 10);
@@ -43,7 +43,7 @@ pub async fn start_mqtt_publisher() {
     let mut mqttoptions = MqttOptions::new("mqtt_publisher", "localhost", 1883);
     let will = LastWill::new("hello/world", "good-bye", QoS::AtMostOnce, false);
     mqttoptions
-        .set_keep_alive(Duration::from_secs(5))
+        .set_keep_alive(Duration::from_secs(60))
         .set_last_will(will);
 
     let (client, mut connection) = Client::new(mqttoptions, 10);
