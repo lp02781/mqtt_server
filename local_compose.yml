@@ -10,9 +10,9 @@ services:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   node_sim:
-    build: ./node_sim/
-    image: mqtt_node_sim_image
-    container_name: mqtt_node_sim_container
+    build: ./mqtt_node/
+    image: mqtt_node_image
+    container_name: mqtt_node_container
     restart: unless-stopped
     network_mode: "host"
 

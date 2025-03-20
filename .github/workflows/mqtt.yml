@@ -1,0 +1,64 @@
+name: MQTT Node CI/CD pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+  
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          
+      - name: Run tests
+        run: |
+          cd ./mqtt_node
+          python -m unittest discover  
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t mqtt_node_image ./mqtt_node  
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Tag Docker image
+        run: |
+          docker tag mqtt_node_image lp02781/mqtt_node_image  # Replace with your Docker Hub username/repository
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push lp02781/mqtt_node_image  
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying the Docker image to Docker hub."

@@ -1,0 +1,62 @@
+name: Actix CI/CD pipeline
+
+on:
+  pull_request:
+    branches:
+      - main 
+  
+  push:
+    branches:
+      - main  
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
+        with:
+          rust-version: stable
+
+      - name: Build the project
+        run: |
+          cd ./actix
+          cargo build --release
+
+      - name: Run tests
+        run: |
+          cd ./actix
+          cargo test
+
+  deploy:
+    needs: build 
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t mqtt_actix_image ./actix
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker image
+        run: |
+          docker tag mqtt_actix_image lp02781/mqtt_actix_image
+          docker push lp02781/mqtt_actix_image
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying the Docker image to Docker hub"
