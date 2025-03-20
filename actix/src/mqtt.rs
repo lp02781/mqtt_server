@@ -1,10 +1,11 @@
 use rumqttc::{Client, Event, LastWill, MqttOptions, Packet, QoS};
-use serde::{Serialize};
 use serde_json;
 use std::time::{Duration, SystemTime};
 use rand::Rng;  
 use rand::rngs::StdRng;  
 use rand::SeedableRng;  
+
+use crate::json;
 
 pub async fn start_mqtt_subscriber() {
     let mut mqttoptions = MqttOptions::new("mqtt_subscriber", "localhost", 1883);
@@ -15,11 +16,10 @@ pub async fn start_mqtt_subscriber() {
 
     let (client, mut connection) = Client::new(mqttoptions, 10);
 
-    client.subscribe("/node_sim_1/data", QoS::AtMostOnce).unwrap();
-    client.subscribe("/node_sim_2/data", QoS::AtMostOnce).unwrap();
-    client.subscribe("/node_sim_3/data", QoS::AtMostOnce).unwrap();
-    client.subscribe("/node_sim_4/data", QoS::AtMostOnce).unwrap();
-    println!("Subscribed to /node_sim_1/data, /node_sim_2/data, /node_sim_3/data, and /node_sim_4/data");
+    client.subscribe("/mqtt_node_1/data", QoS::AtMostOnce).unwrap();
+    client.subscribe("/mqtt_node_2/data", QoS::AtMostOnce).unwrap();
+    
+    println!("Subscribed to /mqtt_node_1/data, /mqtt_node_2/data");
 
     loop {
         match connection.eventloop.poll().await {
@@ -36,24 +36,10 @@ pub async fn start_mqtt_subscriber() {
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
 
-    println!("MQTT client disconnected or error occurred.");
+    println!("MQTT subscriber disconnected or error occurred.");
 }
 
 pub async fn start_mqtt_publisher() {
-    #[derive(Serialize)]
-    struct SensorData {
-        temperature: f32,
-        humidity: u32,
-        current: f32,
-    }
-
-    #[derive(Serialize)]
-    struct MqttPayload {
-        id: String,
-        timestamp: f64,
-        data: SensorData,
-    }
-    
     let mut mqttoptions = MqttOptions::new("mqtt_publisher", "localhost", 1883);
     let will = LastWill::new("hello/world", "good-bye", QoS::AtMostOnce, false);
     mqttoptions
@@ -73,13 +59,13 @@ pub async fn start_mqtt_publisher() {
         let humidity = rng.gen_range(30..80);          
         let current = rng.gen_range(1.0..10.0);        
 
-        let sensor_data = SensorData {
+        let sensor_data = json::SensorData {
             temperature,
             humidity,
             current,
         };
 
-        let payload = MqttPayload {
+        let payload = json::MqttPayload {
             id: String::from("mqtt_actix"),
             timestamp,
             data: sensor_data,
@@ -93,5 +79,5 @@ pub async fn start_mqtt_publisher() {
         tokio::time::sleep(Duration::from_secs(10)).await; 
     }
 
-    println!("MQTT client disconnected or error occurred.");
+    println!("MQTT publisher disconnected or error occurred.");
 }
