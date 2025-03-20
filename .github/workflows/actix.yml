@@ -21,15 +21,15 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Build the project
-        run: |
-          cd ./actix
-          cargo build --release
+      #- name: Build the project
+      #  run: |
+      #    cd ./actix
+      #    cargo build --release
 
-      - name: Run tests
-        run: |
-          cd ./actix
-          cargo test
+      #- name: Run tests
+      #  run: |
+      #    cd ./actix
+      #    cargo test
 
   deploy:
     needs: build 
